@@ -158,17 +158,20 @@
             <div class="mt-6 text-center h-10">
                 <div id="loader" class="loader"></div>
                 <p id="error-msg" class="text-rose-400 font-bold hidden text-sm sm:text-base bg-rose-500/10 py-2 px-4 rounded-xl">
-                    ⚠️⚠️ لم نجد هذا الطالب، راجع البيانات وجرب تاني!
+                    ⚠️ لم نجد هذا الطالب، راجع البيانات وجرب تاني!
                 </p>
             </div>
         </div>
 
         <div id="result-container" class="w-full max-w-xl mt-6 sm:mt-8 hidden">
-            <div class="result-card glass-panel rounded-[2rem] p-6 sm:p-8 border-t-4 border-t-violet-500 text-center relative overflow-hidden">
+            <!-- الكارت والعنوان تم إضافة ID لهم للتحكم في ألوانهم برمجياً -->
+            <div id="result-card-box" class="result-card glass-panel rounded-[2rem] p-6 sm:p-8 border-t-4 border-t-emerald-400 text-center relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-32 h-32 bg-violet-500/20 rounded-full blur-3xl"></div>
                 <div class="absolute bottom-0 left-0 w-32 h-32 bg-sky-500/20 rounded-full blur-3xl"></div>
                 
-                <h3 class="font-lalezar text-3xl sm:text-4xl text-violet-400 mb-6 border-b border-slate-700/50 pb-4">🎉 ألف مبروك النجاح 🎉</h3>
+                <h3 id="result-title" class="font-lalezar text-3xl sm:text-4xl text-emerald-400 mb-6 border-b border-slate-700/50 pb-4">
+                    🎉 ألف مبروك النجاح 🎉
+                </h3>
                 
                 <div class="grid grid-cols-2 gap-3 sm:gap-4 text-center sm:text-right relative z-10">
                     <div class="col-span-2 sm:col-span-1 bg-black/40 p-4 rounded-2xl border border-white/5">
@@ -354,11 +357,8 @@
             searchInput.blur(); 
             errorMsg.classList.add('hidden');
             
-            // --- تم حل مشكلة الإغلاق اللحظي هنا ---
-            // إخفاء النتيجة فوراً بدون تأخير لكي لا تتعارض مع ظهور النتيجة الجديدة
             resultCard.classList.remove('show');
             resultContainer.classList.add('hidden');
-            // ----------------------------------------
 
             loader.style.display = 'block';
             document.getElementById('search-icon').style.display = 'none';
@@ -397,12 +397,41 @@
                     document.getElementById('res-score').textContent = student.total_degree || "---";
                     document.getElementById('res-percentage').textContent = student.Column1 || "---";
                     
+                    // ==========================================
+                    // منطق تحديد النجاح والرسوب (أقل من 50%)
+                    // ==========================================
+                    const titleEl = document.getElementById('result-title');
+                    const cardEl = document.getElementById('result-card-box');
+                    const percentageEl = document.getElementById('res-percentage');
+                    
+                    // استخراج الرقم فقط من النسبة (مثلا تحويل "48%" إلى 48)
+                    let percentageString = student.Column1 || "0";
+                    let numericPercentage = parseFloat(percentageString.replace('%', '').trim());
+
+                    if (numericPercentage < 50) {
+                        // حالة الرسوب
+                        titleEl.textContent = "عذراً، لم يحالفك التوفيق (راسب) 😔";
+                        titleEl.className = "font-lalezar text-3xl sm:text-4xl text-rose-500 mb-6 border-b border-slate-700/50 pb-4";
+                        cardEl.className = "result-card glass-panel rounded-[2rem] p-6 sm:p-8 border-t-4 border-t-rose-500 text-center relative overflow-hidden";
+                        percentageEl.className = "text-2xl sm:text-3xl font-black text-rose-500";
+                    } else {
+                        // حالة النجاح
+                        titleEl.textContent = "🎉 ألف مبروك النجاح 🎉";
+                        titleEl.className = "font-lalezar text-3xl sm:text-4xl text-emerald-400 mb-6 border-b border-slate-700/50 pb-4";
+                        cardEl.className = "result-card glass-panel rounded-[2rem] p-6 sm:p-8 border-t-4 border-t-emerald-400 text-center relative overflow-hidden";
+                        percentageEl.className = "text-2xl sm:text-3xl font-black text-emerald-400";
+                    }
+                    
                     resultContainer.classList.remove('hidden');
                     
-                    // تأخير بسيط جداً للسماح للمتصفح برسم العنصر قبل بدء الأنيميشن
                     setTimeout(() => {
                         resultCard.classList.add('show');
-                        fireConfetti();
+                        
+                        // تشغيل الاحتفال فقط إذا كان ناجحاً
+                        if (numericPercentage >= 50) {
+                            fireConfetti();
+                        }
+
                         setTimeout(() => {
                             resultContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }, 300);
